@@ -11,12 +11,12 @@ ctx.fillStyle = 'black';
 
 let previousPoint = null;
 canvas.addEventListener('pointerdown', event => {
-    previousPoint = { x: ~~event.offsetX, y: ~~event.offsetY };
+    previousPoint = {x: ~~event.offsetX, y: ~~event.offsetY};
 });
 canvas.addEventListener('pointermove', event => {
     if (previousPoint) {
-        const currentPoint = { x: ~~event.offsetX, y: ~~event.offsetY };
-        for(const point of bresenhamLine(previousPoint.x, previousPoint.y, currentPoint.x, currentPoint.y)) {
+        const currentPoint = {x: ~~event.offsetX, y: ~~event.offsetY};
+        for (const point of bresenhamLine(previousPoint.x, previousPoint.y, currentPoint.x, currentPoint.y)) {
             ctx.fillRect(point.x, point.y, 2, 2);
         }
         previousPoint = currentPoint;
@@ -34,18 +34,27 @@ txtColor.addEventListener('change', () => {
 const fileOptions = {
     types: [{
         description: 'PNG files',
-        accept: { 'image/png': ['.png'] }
+        accept: {'image/png': ['.png']}
     }]
 };
 
 const btnSave = document.querySelector('#save');
-btnSave.disabled = !('showSaveFilePicker' in window);
+// btnSave.disabled = !('showSaveFilePicker' in window);
 btnSave.addEventListener('click', async () => {
-   const blob = await toBlob(canvas);
-   const handle = await window.showSaveFilePicker(fileOptions);
-   const writable = await handle.createWritable();
-   await writable.write(blob);
-   await writable.close();
+    const blob = await toBlob(canvas);
+    if ('showSaveFilePicker' in window) {
+        const handle = await window.showSaveFilePicker(fileOptions);
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+    } else {
+        const anchor = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        anchor.href = url;
+        anchor.download = '';
+        anchor.click();
+        URL.revokeObjectURL(url);
+    }
 });
 
 const btnOpen = document.querySelector('#open');
@@ -71,7 +80,7 @@ btnPaste.disabled = !('clipboard' in navigator && 'read' in navigator.clipboard)
 btnPaste.addEventListener('click', async () => {
     const clipboardItems = await navigator.clipboard.read();
     for (const clipboardItem of clipboardItems) {
-        for(const type of clipboardItem.types) {
+        for (const type of clipboardItem.types) {
             if (type === 'image/png') {
                 const blob = await clipboardItem.getType(type);
                 const image = await getImage(blob);
